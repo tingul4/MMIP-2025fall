@@ -30,12 +30,12 @@ const char *file_stem(const char *path)
 /**  分配image所需的記憶體空間 */
 Image *create_image(int w, int h, int c)
 {
-    Image *im = (Image *)malloc(sizeof(Image));
-    im->w = w;
-    im->h = h;
-    im->c = c;
-    im->data = (unsigned char *)malloc((size_t)w * h * c);
-    return im;
+    Image *img = (Image *)malloc(sizeof(Image));
+    img->w = w;
+    img->h = h;
+    img->c = c;
+    img->data = (unsigned char *)malloc((size_t)w * h * c);
+    return img;
 }
 
 /** 釋放image的記憶體 */
@@ -53,13 +53,13 @@ Image *read_image(const char *path)
     unsigned char *data = stbi_load(path, &w, &h, &c, 0);
     if (!data)
         return NULL;
-    Image *im = (Image *)malloc(sizeof(Image));
-    im->w = w;
-    im->h = h;
-    im->c = c;
-    im->data = data;
+    Image *img = (Image *)malloc(sizeof(Image));
+    img->w = w;
+    img->h = h;
+    img->c = c;
+    img->data = data;
     printf("Loaded %s: %dx%d, %d channels\n", path, w, h, c);
-    return im;
+    return img;
 }
 
 Image *read_raw(const char *path, int w, int h, int c)
@@ -67,16 +67,16 @@ Image *read_raw(const char *path, int w, int h, int c)
     FILE *fp = fopen(path, "rb");
     if (!fp)
         return NULL;
-    Image *im = create_image(w, h, c);
+    Image *img = create_image(w, h, c);
     size_t need = (size_t)w * h * c;
-    size_t got = fread(im->data, 1, need, fp);
+    size_t got = fread(img->data, 1, need, fp);
     fclose(fp);
     if (got != need)
     {
-        free_image(im);
+        free_image(img);
         return NULL;
     }
-    return im;
+    return img;
 }
 
 void save_png(const char *path, const Image *img)

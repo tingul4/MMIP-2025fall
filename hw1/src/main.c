@@ -60,45 +60,28 @@ static void save_center_10x10_into_png(const char *outp, const Image *img)
     free(small.data);
 }
 
-static void cmd_read_raw(const char *path)
+static void cmd_read_image(const char *path)
 {
     ensure_out_dir();
-    int w = 512, h = 512, c = 1;
-    Image *img = read_raw(path, w, h, c);
+    Image *img = read_image(path);
+    if (!img)
+        img = read_raw(path, 512, 512, 1);
     if (!img)
     {
         fprintf(stderr, "Failed to read RAW\n");
         return;
     }
-    const char *file_name = file_stem(path);
-    char save_path[256];
-    snprintf(save_path, sizeof(save_path), "out/A/%s.png", file_name);
-    save_png(save_path, img); // PNG for convenience
-    char save_path_center[256];
-    snprintf(save_path_center, sizeof(save_path_center), "out/A/%s_center.png", file_name);
-    save_center_10x10_into_png(save_path_center, img);
-    free_image(img);
-    printf("Saved %s\n", save_path);
-}
 
-static void cmd_read_jpg(const char *path)
-{
-    ensure_out_dir();
-    Image *img = read_image(path); // loads as 1 or 3 channels depending on file
-    if (!img)
-    {
-        fprintf(stderr, "Failed to read image\n");
-        return;
-    }
-    const char *file_name = file_stem(path);
-    char save_path[256];
-    snprintf(save_path, sizeof(save_path), "out/A/%s.png", file_name);
-    save_png(save_path, img);
-    char save_path_center[256];
-    snprintf(save_path_center, sizeof(save_path_center), "out/A/%s_center.png", file_name);
-    save_center_10x10_into_png(save_path_center, img);
+    char outp[256];
+    snprintf(outp, sizeof(outp), "out/A/%s.png", file_stem(path));
+    save_png(outp, img);
+    printf("Saved image %s\n", outp);
+
+    char outp_center[256];
+    snprintf(outp_center, sizeof(outp_center), "out/A/%s_center.png", file_stem(path));
+    save_center_10x10_into_png(outp_center, img);
+    printf("Saved center %s\n", outp);
     free_image(img);
-    printf("Saved %s\n", save_path);
 }
 
 static void cmd_point_op(const char *path, const char *op, double param)
@@ -198,13 +181,9 @@ int main(int argc, char **argv)
                 argv[0], argv[0], argv[0], argv[0]);
         return 1;
     }
-    if (strcmp(argv[1], "read_raw") == 0)
+    if (strcmp(argv[1], "read_image") == 0)
     {
-        cmd_read_raw(argv[2]);
-    }
-    else if (strcmp(argv[1], "read_jpg") == 0)
-    {
-        cmd_read_jpg(argv[2]);
+        cmd_read_image(argv[2]);
     }
     else if (strcmp(argv[1], "point_op") == 0)
     {
