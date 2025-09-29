@@ -18,12 +18,13 @@ const char* file_stem(const char *path) {
     if (!slash || (bslash && bslash > slash)) slash = bslash;
 #endif
     const char *name = slash ? slash + 1 : path;
-    strncpy(stem_buf, name, sizeof(stem_buf));
+    snprintf(stem_buf, sizeof(stem_buf), "%s", name);
     char *dot = strrchr(stem_buf, '.');
     if (dot) *dot = '\0';
     return stem_buf;
 }
 
+/**  分配image所需的記憶體空間 */
 Image* create_image(int w, int h, int c) {
     Image *im = (Image*)malloc(sizeof(Image));
     im->w = w; im->h = h; im->c = c;
@@ -31,6 +32,7 @@ Image* create_image(int w, int h, int c) {
     return im;
 }
 
+/** 釋放image的記憶體 */
 void free_image(Image *im) {
     if (!im) return;
     free(im->data);
@@ -40,7 +42,8 @@ void free_image(Image *im) {
 unsigned char rgb2gray_px(const unsigned char *rgb) {
     // ITU-R BT.601 luma approximation
     double y = 0.299*rgb[0] + 0.587*rgb[1] + 0.114*rgb[2];
-    if (y < 0) y = 0; if (y > 255) y = 255;
+    if (y < 0) y = 0;
+    if (y > 255) y = 255;
     return (unsigned char)(y + 0.5);
 }
 
@@ -96,7 +99,9 @@ void save_png(const char *path, const Image *im) {
 
 // ---------------- Point operations ----------------
 static inline unsigned char clamp255(int v){
-    if (v < 0) return 0; if (v > 255) return 255; return (unsigned char)v;
+    if (v < 0) return 0;
+    if (v > 255) return 255;
+    return (unsigned char)v;
 }
 
 Image* point_log(const Image *g1) {
@@ -135,10 +140,12 @@ Image* resize_nearest(const Image *g1, int out_w, int out_h) {
     double sy = (double)g1->h / out_h;
     for (int y=0;y<out_h;++y){
         int syi = (int)floor(y*sy + 0.5);
-        if (syi < 0) syi = 0; if (syi >= g1->h) syi = g1->h-1;
+        if (syi < 0) syi = 0;
+        if (syi >= g1->h) syi = g1->h-1;
         for (int x=0;x<out_w;++x){
             int sxi = (int)floor(x*sx + 0.5);
-            if (sxi < 0) sxi = 0; if (sxi >= g1->w) sxi = g1->w-1;
+            if (sxi < 0) sxi = 0;
+            if (sxi >= g1->w) sxi = g1->w-1;
             out->data[y*out_w + x] = g1->data[syi*g1->w + sxi];
         }
     }
@@ -146,8 +153,10 @@ Image* resize_nearest(const Image *g1, int out_w, int out_h) {
 }
 
 static inline unsigned char at_clamp(const Image *g, int x, int y){
-    if (x < 0) x = 0; if (x >= g->w) x = g->w-1;
-    if (y < 0) y = 0; if (y >= g->h) y = g->h-1;
+    if (x < 0) x = 0;
+    if (x >= g->w) x = g->w-1;
+    if (y < 0) y = 0;
+    if (y >= g->h) y = g->h-1;
     return g->data[y*g->w + x];
 }
 
@@ -174,7 +183,8 @@ Image* resize_bilinear(const Image *g1, int out_w, int out_h) {
             double top = (1-wx)*I00 + wx*I10;
             double bot = (1-wx)*I01 + wx*I11;
             int s = (int)round((1-wy)*top + wy*bot);
-            if (s < 0) s = 0; if (s > 255) s = 255;
+            if (s < 0) s = 0;
+            if (s > 255) s = 255;
             out->data[y*out_w + x] = (unsigned char)s;
         }
     }

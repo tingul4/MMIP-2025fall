@@ -19,52 +19,66 @@
 
 static void ensure_out_dir(void) {
 #ifdef _WIN32
-    system("if not exist out mkdir out");
+    if (system("if not exist out mkdir out") != 0) {
+        fprintf(stderr, "warning: failed to create out directory\n");
+    }
 #else
-    system("mkdir -p out");
+    if (system("mkdir -p out") != 0) {
+        fprintf(stderr, "warning: failed to create out directory\n");
+    }
 #endif
 }
 
-static void print_center_10x10(const Image *im, const char *tag) {
+static void save_center_10x10_into_png(const char *outp, const Image *im) {
     int cx = im->w / 2, cy = im->h / 2;
     int x0 = cx - 5, y0 = cy - 5;
-    printf("Center 10x10 (%s):\n", tag);
+    printf("Center 10x10:\n");
+    Image small;
+    small.w = 10; small.h = 10; small.c = 1;
+    small.data = (unsigned char*)malloc(10 * 10);
     for (int y = 0; y < 10; ++y) {
         for (int x = 0; x < 10; ++x) {
             int xi = x0 + x, yi = y0 + y;
             xi = xi < 0 ? 0 : (xi >= im->w ? im->w - 1 : xi);
             yi = yi < 0 ? 0 : (yi >= im->h ? im->h - 1 : yi);
-            unsigned char v = im->c == 1
-                              ? im->data[yi * im->w + xi]
-                              : rgb2gray_px(&im->data[(yi * im->w + xi) * 3]);
+            unsigned char v = im->data[yi * im->w + xi];
+            small.data[y * small.w + x] = v;
             printf("%3d ", (int)v);
         }
         printf("\n");
     }
+    save_png(outp, &small);
+    free(small.data);
 }
 
 static void cmd_read_raw(const char *path) {
     ensure_out_dir();
     Image *im = read_raw_512(path); // 512x512, 1 channel
     if (!im) { fprintf(stderr, "Failed to read RAW\n"); return; }
-    print_center_10x10(im, path);
-    save_png("out/raw_view.png", im); // PNG for convenience
+    const char* file_name = file_stem(path);
+    char save_path[256];
+    snprintf(save_path, sizeof(save_path), "out/%s.png", file_name);
+    save_png(save_path, im); // PNG for convenience
+    char save_path_center[256];
+    snprintf(save_path_center, sizeof(save_path_center), "out/%s_center.png", file_name);
+    save_center_10x10_into_png(save_path_center, im);
     free_image(im);
-    printf("Saved out/raw_view.png\n");
+    printf("Saved %s\n", save_path);
 }
 
 static void cmd_read_jpg(const char *path) {
     ensure_out_dir();
     Image *im = read_image(path); // loads as 1 or 3 channels depending on file
     if (!im) { fprintf(stderr, "Failed to read image\n"); return; }
-    print_center_10x10(im, path);
-    save_png("out/jpg_view.png", im);
-    // also save grayscale version to match assignment grayscale displays
-    Image *gray = to_grayscale(im);
-    save_png("out/jpg_gray.png", gray);
-    free_image(gray);
+    const char* file_name = file_stem(path);
+    char save_path[256];
+    snprintf(save_path, sizeof(save_path), "out/%s.png", file_name);
+    save_png(save_path, im);
+    char save_path_center[256];
+    snprintf(save_path_center, sizeof(save_path_center), "out/%s_center.png", file_name);
+    save_center_10x10_into_png(save_path_center, im);
     free_image(im);
-    printf("Saved out/jpg_view.png and out/jpg_gray.png\n");
+    printf("Saved %s\n", save_path);
 }
 
 static void cmd_point_op(const char *path, const char *op, double param) {
@@ -91,7 +105,6 @@ static void cmd_point_op(const char *path, const char *op, double param) {
         else
             snprintf(outp, sizeof(outp), "out/%s_%s.png", file_stem(path), op);
         save_png(outp, res);
-        print_center_10x10(res, op);
         free_image(res);
         printf("Saved %s\n", outp);
     }
@@ -121,7 +134,6 @@ static void cmd_resize(const char *path,
         snprintf(outp, sizeof(outp), "out/resize_%dx%d_to_%dx%d_%s.png",
                  g->w, g->h, out_w, out_h, method);
         save_png(outp, res);
-        print_center_10x10(res, "resized");
         free_image(res);
         printf("Saved %s\n", outp);
     }
