@@ -1,7 +1,7 @@
 # HW1
 
 ### 專案說明
-本專案以標準 C 實作數位影像處理作業：影像讀取與顯示、中心 10×10 像素列印、點運算（log、gamma、negative），以及最近鄰與雙線性插值之下採樣與上採樣；支援 512×512 RAW 灰階與常見 JPEG/PNG 影像。[^10]
+本專案以標準 C 實作數位影像處理作業：影像讀取與顯示、中心 10×10 像素列印、點運算（log、gamma、negative），以及最近鄰與雙線性插值之下採樣與上採樣；支援 512×512 RAW 灰階與常見 JPEG/PNG 影像。
 
 ### 專案結構
 
@@ -13,9 +13,7 @@
 │   ├── goldhill.raw
 │   ├── lena.raw
 │   └── peppers.raw
-├── dip_tool
 ├── Makefile
-├── out
 ├── README.md
 ├── report
 └── src
@@ -45,16 +43,16 @@ make clean
 
 **四個子命令，所有輸出會寫入 out/ 目錄並在終端印出中心 10×10 像素表格**
 
-> 讀取 RAW（512×512、8-bit、row-major）
+> 讀取 RAW（512×512x1, row-major）
 
 ```
-./dip_tool read_raw data/peppers.raw
+./dip_tool read_image data/peppers.raw
 ```
 
-> 讀取 JPEG/PNG 並顯示與灰階化輸出
+> 讀取 JPEG/PNG 
 
 ```
-./dip_tool read_jpg data/boat.bmp
+./dip_tool read_image data/boat.bmp
 ```
 
 > 點運算：log、gamma、negative（gamma 需額外參數）
@@ -75,6 +73,20 @@ make clean
 ./dip_tool resize data/F16.bmp 128 128 256 512 bilinear
 ```
 
+### 快速實驗
+**輸出檔案在 out/ 中可以找到**
+> problem a: Image reading
+```
+sh run_problem_a.sh
+```
+> problem b: Image enhancement
+```
+sh run_problem_b.sh
+```
+> problem : Image downsampling and upsampling
+```
+sh run_problem_c.sh
+```
 
 ### 功能說明
 
@@ -82,20 +94,17 @@ make clean
 
 JPEG/PNG 以單檔函式庫載入，RAW 以 fread 直接讀入 512×512 灰階，像素順序為 row-major，所有讀入皆可輸出 PNG 以便檢視。
 
-> 中心 10×10 列印
-
-以影像中心為基準取 10×10 區塊，邊界 clamp，RGB 會先轉灰階後列印，數值以 0–255 顯示。
-
 > 點運算
 
-- log 轉換：s = c·log(1+r)，c = 255/log(256)，提升暗部對比。
-- gamma：s = 255·(r/255)^γ；γ>1 壓抑亮部，γ<1 提升暗部。
-- negative：s = 255 − r。
+- log transform: s = c·log(1+r)，c = 255/log(256)，提升暗部對比。
+- gamma transform: s = 255·(r/255)^γ，γ>1 壓抑亮部，γ<1 提升暗部。
+- negative: s = 255 − r。
  
 > 重採樣
 
-- 最近鄰：對應座標取最接近整數像素，速度快、鋸齒明顯。
-- 雙線性：以四鄰點做二次線性插值，邊界 clamp，畫質較平滑。
+- Nearest neighbor interpolation：對應座標取最接近整數像素，速度快、鋸齒明顯。
+- Bilinear interpolation：以四鄰點做二次線性插值，邊界 clamp，畫質較平滑。
+
 
 ### Reference
 - [stb](https://github.com/nothings/stb)
