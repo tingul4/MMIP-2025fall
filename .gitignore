@@ -1,2 +1,8 @@
 **/out
 dip_tool
+__pycache__/
+TCIA/
+2_skull_ct/
+data/
+report_ieee/
+results/

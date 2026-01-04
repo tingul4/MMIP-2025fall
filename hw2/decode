@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+def main():
+    here = os.path.dirname(os.path.abspath(__file__))
+    main_py = os.path.join(here, "main.py")
+    os.execv(sys.executable, [sys.executable, main_py, "decode", *sys.argv[1:]])
+
+if __name__ == "__main__":
+    main()
